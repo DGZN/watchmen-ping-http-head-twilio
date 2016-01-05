@@ -1,12 +1,12 @@
 var request = require('request'),
-     client = require('twilio')('ACCOUNT_SID', 'AUTH_TOKEN');
+     client = require('twilio')(process.env.TWILIO_ACCOUNT_SID || '', process.env.TWILIO_AUTH_TOKEN || '');
 
-function PingService() {
-}
+function PingService() {}
 
 exports = module.exports = PingService;
 
 PingService.prototype.ping = function (service, callback) {
+  var self = this;
   var startTime = +new Date();
   var options = {
     method: 'HEAD',
@@ -23,13 +23,13 @@ PingService.prototype.ping = function (service, callback) {
 
   request.get(options, function (error, response, body) {
     if (error) {
-      PingService.sendTwilioAlert(service)
+      self.sendTwilioAlert(service, '@error _'+error.stack+'_')
       return callback(error, body, response, +new Date() - startTime);
     }
     if (response && response.statusCode != expectedStatusCode) {
       var errMsg = 'Invalid status code. Found: ' + response.statusCode +
           '. Expected: ' + expectedStatusCode;
-      PingService.sendTwilioAlert(service)
+      self.sendTwilioAlert(service, '@invalidStatusCode _'+response.statusCode+'_')
       return callback(errMsg, body, response, +new Date() - startTime);
     }
     callback(null, body, response, +new Date() - startTime);
@@ -45,11 +45,12 @@ PingService.prototype.getDefaultOptions = function () {
   };
 };
 
-PingService.prototype.sendTwilioAlert = function () {
+PingService.prototype.sendTwilioAlert = function (service, message) {
+  console.log("SERVICE", service)
   client.sendMessage({
-    to:   '',             // Any number Twilio can deliver to
-    from: '',            // A number you bought from Twilio and can use for outbound communication
-    body: service.name + ' :: ' serviceOptions.statusCode.value
+    to:   process.env.TWILIO_SMS_TO   || '',
+    from: process.env.TWILIO_SMS_FROM || '',
+    body: service.name + ' :: ' + message
   }, function(error, data) {
     if (error)
       return console.log(require('util').inspect({
