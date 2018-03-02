@@ -1,6 +1,13 @@
 # watchmen-ping-http-head-twilio
 HTTP ping service for Watchmen with Twilio SMS alerts
 
+
+## Install
+
+```
+npm install watchmen-ping-http-head-twilio-sms
+```
+
 ### Twilio Configuration
 
 ##### Set Environment Variables
